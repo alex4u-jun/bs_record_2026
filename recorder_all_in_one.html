@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>경기 기록 입력 — 헌터스 × 리더스</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Saira+Condensed:wght@500;600;700&family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b14; --bg2:#0b1220; --panel:#0f1729; --panel2:#121d33;
+  --line:#1d2c4a; --line2:#273a5e; --text:#e8eef9; --muted:#8497b8; --dim:#5b6d8e;
+  --csia:#ff5a3c; --csia-glow:rgba(255,90,60,.4);
+  --leaders:#27d0ff; --leaders-glow:rgba(39,208,255,.4);
+  --accent:#ffd23f; --good:#34e0a1; --bad:#ff647c; --walk:#27d0ff;
+  --display:'Bebas Neue',sans-serif; --mono:'Saira Condensed',sans-serif;
+  --body:'Saira',system-ui,'Noto Sans KR',sans-serif;
+  --radius:16px; --shadow:0 14px 40px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--body); color:var(--text); min-height:100vh;
+  background:
+    radial-gradient(1000px 500px at 18% -10%, rgba(39,208,255,.10), transparent 60%),
+    radial-gradient(900px 450px at 88% 0%, rgba(255,90,60,.10), transparent 55%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  background-attachment:fixed;
+}
+.wrap{ max-width:760px; margin:0 auto; padding:20px 16px 60px; }
+a{color:inherit;text-decoration:none;}
+
+/* header */
+header.top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand .logo{ width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(145deg,var(--csia) 0 49%,var(--leaders) 51% 100%);
+  display:grid;place-items:center;font-size:20px; box-shadow:0 0 18px rgba(39,208,255,.3);}
+.brand h1{ font-family:var(--display); font-weight:400; letter-spacing:1px; font-size:24px; margin:0; }
+.brand .sub{ font-family:var(--mono); color:var(--muted); font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+.toplink{ font-family:var(--mono); font-size:13px; color:var(--muted); border:1px solid var(--line); padding:8px 13px; border-radius:9px; }
+.toplink:hover{ color:var(--text); border-color:var(--line2); }
+
+/* panels */
+.panel{ background:linear-gradient(180deg,var(--panel),var(--bg2)); border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; margin-bottom:16px; }
+.panel h2{ font-family:var(--mono); font-size:13px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--accent); margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+.row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+label.fld{ display:flex; flex-direction:column; gap:5px; font-family:var(--mono); font-size:12px; letter-spacing:.5px; color:var(--muted); }
+input,select{ font-family:var(--body); font-size:15px; padding:11px 13px; border-radius:10px;
+  border:1px solid var(--line); background:var(--panel2); color:var(--text); }
+input:focus,select:focus{ outline:none; border-color:var(--leaders); box-shadow:0 0 0 3px var(--leaders-glow); }
+button{ font-family:var(--mono); font-weight:700; font-size:15px; letter-spacing:.5px; cursor:pointer;
+  border:none; border-radius:10px; padding:11px 18px; background:var(--leaders); color:#04121c;
+  transition:transform .08s ease, filter .15s ease; }
+button:hover{ filter:brightness(1.05); } button:active{ transform:scale(.97); }
+button.ghost{ background:var(--panel2); color:var(--text); border:1px solid var(--line2); }
+button.accent{ background:linear-gradient(180deg,var(--accent),#f0b400); color:#1a1300; }
+button.danger{ background:transparent; color:var(--bad); border:1px solid var(--bad); }
+button.sm{ padding:8px 12px; font-size:13px; }
+button:disabled{ opacity:.4; cursor:not-allowed; }
+
+/* game setup */
+#gameMeta .row{ gap:12px; }
+.badge{ font-family:var(--mono); font-size:12px; letter-spacing:1px; padding:6px 12px; border-radius:999px;
+  background:var(--panel2); border:1px solid var(--line2); color:var(--muted); }
+.badge b{ color:var(--accent); }
+
+/* scoreboard mini */
+.miniboard{ display:flex; align-items:center; justify-content:center; gap:18px; padding:14px;
+  background:linear-gradient(180deg,#0a1322,#0d1830); border:1px solid var(--line2); border-radius:14px; margin-bottom:14px; }
+.mb-team{ text-align:center; } .mb-team .tn{ font-family:var(--mono); font-weight:700; font-size:14px; }
+.mb-team .tn.csia{color:var(--csia)} .mb-team .tn.leaders{color:var(--leaders)}
+.mb-team .rn{ font-family:var(--display); font-size:42px; line-height:.9; }
+.mb-mid{ text-align:center; font-family:var(--mono); color:var(--dim); font-size:12px; }
+.mb-mid .inn{ font-family:var(--display); font-size:24px; color:var(--accent); }
+
+/* lineup editor */
+.lineup-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:560px){ .lineup-grid{ grid-template-columns:1fr; } }
+.lineup-col h3{ font-family:var(--mono); font-size:13px; letter-spacing:1px; margin:0 0 8px; }
+.lineup-col h3.csia{color:var(--csia)} .lineup-col h3.leaders{color:var(--leaders)}
+.lineup-slot{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
+.lineup-slot .ord{ font-family:var(--display); font-size:18px; color:var(--dim); width:22px; text-align:center; }
+.lineup-slot select{ flex:1; padding:8px 10px; font-size:14px; }
+
+/* current batter / result buttons */
+.atbat{ text-align:center; }
+.atbat .who-label{ font-family:var(--mono); font-size:12px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+.atbat .who{ font-family:var(--display); font-size:46px; line-height:1; margin:4px 0 2px; }
+.atbat .who .ord{ color:var(--accent); font-size:.6em; margin-right:8px; }
+.atbat .meta{ font-family:var(--mono); font-size:13px; color:var(--muted); margin-bottom:6px; }
+.atbat .pitcher{ font-family:var(--mono); font-size:12px; color:var(--dim); }
+.batter-nav{ display:flex; justify-content:center; gap:8px; margin:12px 0; }
+
+.result-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:14px; }
+@media(max-width:420px){ .result-grid{ grid-template-columns:repeat(2,1fr); } }
+.rbtn{ padding:18px 8px; border-radius:13px; font-family:var(--mono); font-weight:700; font-size:17px;
+  border:1.5px solid var(--line2); background:var(--panel2); color:var(--text); text-align:center; }
+.rbtn:active{ transform:scale(.95); }
+.rbtn .sub{ display:block; font-size:11px; color:var(--dim); font-weight:500; margin-top:2px; letter-spacing:.5px; }
+.rbtn.hit{ border-color:rgba(52,224,161,.5); } .rbtn.hit:hover{ background:rgba(52,224,161,.12); }
+.rbtn.hr{ border-color:var(--accent); color:var(--accent); } .rbtn.hr:hover{ background:rgba(255,210,63,.12); }
+.rbtn.out{ border-color:var(--line2); } .rbtn.out:hover{ background:rgba(255,255,255,.04); }
+.rbtn.walk{ border-color:rgba(39,208,255,.5); } .rbtn.walk:hover{ background:rgba(39,208,255,.12); }
+.rbtn.err{ border-color:rgba(255,100,124,.5); } .rbtn.err:hover{ background:rgba(255,100,124,.1); }
+
+/* extras (rbi/run) popup after result */
+.extras{ display:none; margin-top:14px; padding:14px; border-radius:12px; background:var(--panel2); border:1px solid var(--line2); }
+.extras.show{ display:block; animation:slideIn .2s ease; }
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.extras .er-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.stepper{ display:flex; align-items:center; gap:10px; }
+.stepper button{ width:38px;height:38px;padding:0;font-size:20px;background:var(--panel);border:1px solid var(--line2);color:var(--text); }
+.stepper .val{ font-family:var(--display); font-size:26px; min-width:30px; text-align:center; }
+
+/* AI input */
+.ai-box textarea{ width:100%; min-height:90px; resize:vertical; font-family:var(--body); font-size:15px;
+  padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel2); color:var(--text); line-height:1.6; }
+.ai-box textarea:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(255,210,63,.2); }
+.ai-hint{ font-family:var(--mono); font-size:12px; color:var(--dim); margin:8px 0 12px; line-height:1.6; }
+.ai-status{ font-family:var(--mono); font-size:13px; margin-top:10px; min-height:18px; }
+.ai-status.err{ color:var(--bad); } .ai-status.ok{ color:var(--good); } .ai-status.busy{ color:var(--accent); }
+
+/* AI preview (확인 후 저장) */
+.preview{ display:none; margin-top:14px; }
+.preview.show{ display:block; }
+.preview-item{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+  background:var(--panel2); border:1px solid var(--line); margin-bottom:7px; font-size:14px; }
+.preview-item .pi-inn{ font-family:var(--mono); font-size:11px; color:var(--dim); width:48px; }
+.preview-item .pi-htr{ font-weight:600; min-width:60px; }
+.preview-item .pi-res{ font-family:var(--mono); font-weight:600; }
+.preview-item .pi-extra{ font-size:12px; color:var(--accent); font-family:var(--mono); }
+.preview-item .pi-del{ margin-left:auto; background:none; border:none; color:var(--dim); font-size:18px; padding:0 6px; }
+.preview-item .pi-del:hover{ color:var(--bad); }
+
+/* history log */
+.log-item{ display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; font-size:14px; }
+.log-item:nth-child(odd){ background:rgba(255,255,255,.02); }
+.log-item .li-inn{ font-family:var(--mono); font-size:11px; color:var(--dim); width:46px; }
+.log-item .li-htr{ font-weight:600; min-width:56px; }
+.log-item .li-res{ font-family:var(--mono); font-weight:600; }
+.log-item .li-extra{ font-size:12px; color:var(--accent); font-family:var(--mono); }
+.log-item .li-del{ margin-left:auto; background:none;border:none;color:var(--dim);font-size:16px;padding:0 4px; }
+.log-item .li-del:hover{ color:var(--bad); }
+.res-hit{color:var(--good)} .res-out{color:var(--muted)} .res-walk{color:var(--walk)} .res-hr{color:var(--accent)} .res-err{color:var(--bad)}
+
+.empty{ text-align:center; color:var(--dim); font-family:var(--mono); padding:24px; font-size:13px; letter-spacing:.5px; }
+.hidden{ display:none !important; }
+.flex-between{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--good); color:#04121c;
+  font-family:var(--mono); font-weight:700; padding:12px 22px; border-radius:999px; box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; z-index:50; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+.seg{ display:inline-flex; background:var(--panel2); border:1px solid var(--line2); border-radius:10px; overflow:hidden; }
+.seg button{ background:transparent; color:var(--muted); border:none; padding:9px 16px; font-size:14px; }
+.seg button.active{ background:var(--leaders); color:#04121c; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">⚾</div>
+      <div>
+        <h1>경기 기록 입력</h1>
+        <div class="sub">Hunters × Leaders · 2026</div>
+      </div>
+    </div>
+    <a class="toplink" href="record_all_in_one.html">📊 기록실 보기</a>
+  </header>
+
+  <!-- 1. 경기 설정 -->
+  <div class="panel" id="setupPanel">
+    <h2>① 경기 시작</h2>
+    <div class="row" id="gameMeta">
+      <label class="fld">날짜
+        <input type="date" id="gameDate">
+      </label>
+      <label class="fld">선공
+        <select id="firstTeamSel">
+          <option value="Hunters">헌터스</option>
+          <option value="Leaders">리더스</option>
+        </select>
+      </label>
+      <label class="fld">&nbsp;
+        <button class="accent" id="startGameBtn">+ 새 경기 시작</button>
+      </label>
+      <label class="fld">이어하기
+        <select id="loadGameSel"><option value="">저장된 경기…</option></select>
+      </label>
+    </div>
+  </div>
+
+  <!-- 2. 라인업 -->
+  <div class="panel hidden" id="lineupPanel">
+    <h2>② 타순 정하기 <span style="color:var(--dim);font-weight:500;text-transform:none;letter-spacing:0;">— 비워두면 자동 진행</span></h2>
+    <div class="lineup-grid" id="lineupGrid"></div>
+    <div class="flex-between" style="margin-top:14px;">
+      <button class="ghost sm" id="autoFillBtn">명단 순서로 자동 채우기</button>
+      <button class="accent" id="lineupDoneBtn">타순 확정 →</button>
+    </div>
+  </div>
+
+  <!-- 3. 기록 중 -->
+  <div class="hidden" id="recordPanel">
+    <div class="miniboard" id="miniboard"></div>
+
+    <!-- 입력 모드 전환 -->
+    <div style="text-align:center; margin-bottom:14px;">
+      <div class="seg" id="modeSeg">
+        <button data-mode="button" class="active">👆 버튼 입력</button>
+        <button data-mode="ai">✨ AI 입력</button>
+      </div>
+    </div>
+
+    <!-- 버튼 입력 -->
+    <div class="panel" id="buttonMode">
+      <div class="atbat">
+        <div class="who-label">현재 타자</div>
+        <div class="who" id="curBatter">—</div>
+        <div class="meta" id="curBatterMeta"></div>
+        <div class="pitcher" id="curPitcher"></div>
+      </div>
+      <div class="batter-nav">
+        <button class="ghost sm" id="prevBatterBtn">◀ 이전</button>
+        <button class="ghost sm" id="pickBatterBtn">타자 직접 선택</button>
+        <button class="ghost sm" id="nextBatterBtn">다음 ▶</button>
+      </div>
+      <div class="result-grid" id="resultGrid"></div>
+
+      <!-- 결과 후 타점/득점 추가 -->
+      <div class="extras" id="extrasBox">
+        <div class="er-row">
+          <span style="font-family:var(--mono);">타점 (RBI)</span>
+          <div class="stepper"><button data-er="rbi" data-d="-1">−</button><span class="val" id="rbiVal">0</span><button data-er="rbi" data-d="1">+</button></div>
+        </div>
+        <div class="er-row">
+          <span style="font-family:var(--mono);">이 타자 득점</span>
+          <div class="stepper"><button data-er="run" data-d="-1">−</button><span class="val" id="runVal">0</span><button data-er="run" data-d="1">+</button></div>
+        </div>
+        <div class="er-row" id="erRow">
+          <span style="font-family:var(--mono);">투수 자책점 추가</span>
+          <div class="stepper"><button data-er="er" data-d="-1">−</button><span class="val" id="erVal">0</span><button data-er="er" data-d="1">+</button></div>
+        </div>
+        <div class="flex-between" style="margin-top:6px;">
+          <button class="ghost sm" id="extrasCancelBtn">취소</button>
+          <button class="accent" id="extrasSaveBtn">이 타석 저장 ✓</button>
+        </div>
+      </div>
+
+      <div class="flex-between" style="margin-top:14px;">
+        <button class="ghost sm" id="switchHalfBtn">공수 교대 ⇄</button>
+        <button class="ghost sm" id="changePitcherBtn">투수 변경</button>
+      </div>
+    </div>
+
+    <!-- AI 입력 -->
+    <div class="panel hidden ai-box" id="aiMode">
+      <h2>✨ AI 자연어 입력</h2>
+      <div class="ai-hint">
+        타석 상황을 자연스럽게 적으면 AI가 기록으로 변환해요. 인터넷 연결이 필요합니다.<br>
+        예) "1번타자 우익수앞 안타, 2번타자 플라이아웃, 3번타자 2루타로 1번 득점"
+      </div>
+      <textarea id="aiInput" placeholder="이번 이닝/타석 상황을 적어주세요…"></textarea>
+      <div class="flex-between" style="margin-top:10px;">
+        <span class="ai-status" id="aiStatus"></span>
+        <button class="accent" id="aiParseBtn">AI로 변환 →</button>
+      </div>
+      <!-- 변환 결과 확인 -->
+      <div class="preview" id="aiPreview">
+        <div style="font-family:var(--mono);font-size:12px;letter-spacing:1px;color:var(--accent);margin:14px 0 8px;">변환 결과 — 확인 후 저장</div>
+        <div id="previewList"></div>
+        <div class="flex-between" style="margin-top:10px;">
+          <button class="ghost sm" id="previewCancelBtn">취소</button>
+          <button class="accent" id="previewSaveBtn">전부 저장 ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기록 로그 -->
+    <div class="panel">
+      <div class="flex-between" style="margin-bottom:10px;">
+        <h2 style="margin:0;">기록 로그 <span id="logCount" style="color:var(--dim)"></span></h2>
+        <button class="ghost sm" id="undoBtn">↶ 마지막 취소</button>
+      </div>
+      <div id="logList"><div class="empty">아직 기록이 없습니다.</div></div>
+    </div>
+
+    <!-- 저장/내보내기 -->
+    <div class="panel">
+      <h2>경기 저장</h2>
+      <div class="row">
+        <button class="accent" id="exportBtn">⬇ 이 경기 파일 내보내기</button>
+        <button class="ghost" id="endGameBtn">경기 종료</button>
+      </div>
+      <div class="ai-hint" style="margin-top:12px;margin-bottom:0;">
+        내보낸 파일을 <b style="color:var(--leaders)">merge.html</b>에 넣어 정리한 뒤 기록실에 반영하세요.
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* ============================================================
+   경기 기록 입력 (Recorder) — 헌터스 × 리더스 2026
+   버튼 입력(오프라인 OK) + AI 자연어 입력(인터넷 필요, 확인 후 저장)
+   ============================================================ */
+
+/* ---- 2026 명단 (내장: 인터넷 없이 작동) ---- */
+const ROSTER = {
+  Hunters: ['배인성','김태흠','이원준','김태호','김도율','김준우','한서진','김웅찬','소유준','이지우','성일운','이시언','이우빈','김시우','김강경'],
+  Leaders: ['이동권','진승우','우현민','강세영','서형준','강성현','우지성','김석민','김태성','설지우','김동욱','설승환','고예준','권도현'],
+};
+const TEAM_KO = { Hunters:'헌터스', Leaders:'리더스' };
+const teamClass = t => t==='Hunters' ? 'csia' : 'leaders';   // 헌터스=붉은, 리더스=시안
+
+/* ---- 결과 버튼 정의 ----
+   hitterEvent: players 스탯에 들어갈 결과 / pitcherEvent: 투수쪽 기록 */
+const RESULTS = [
+  { key:'1루타', cls:'hit', sub:'안타', pitcher:'피안타', isHit:true },
+  { key:'2루타', cls:'hit', sub:'2B',  pitcher:'피안타', isHit:true },
+  { key:'3루타', cls:'hit', sub:'3B',  pitcher:'피안타', isHit:true },
+  { key:'홈런',  cls:'hr',  sub:'HR',  pitcher:'피홈런', isHit:true },
+  { key:'볼넷',  cls:'walk',sub:'BB',  pitcher:'볼넷' },
+  { key:'삼진',  cls:'out', sub:'K',   pitcher:'삼진' },
+  { key:'내야땅볼', cls:'out', sub:'땅볼', pitcher:'내야땅볼' },
+  { key:'플라이아웃', cls:'out', sub:'뜬공', pitcher:'플라이아웃' },
+  { key:'수비 실책', cls:'err', sub:'실책(ROE)', pitcher:'' },
+  { key:'희생플라이', cls:'out', sub:'희플', pitcher:'플라이아웃' },
+];
+
+/* ---- 상태 ---- */
+const LS_KEY = 'recorder_state_2026';
+let G = null;   // 현재 경기 상태 객체
+
+function blankGame(date, firstTeam){
+  const home = firstTeam==='Hunters' ? 'Leaders' : 'Hunters';  // 선공=원정 관례
+  const away = firstTeam;
+  const gameId = `${date}_${away}@${home}`;
+  return {
+    gameId, date, homeTeam:home, awayTeam:away, firstTeam, notes:'',
+    inning:1, half:'초',
+    lineup:{ Hunters:[], Leaders:[] },   // 타순 (이름 배열)
+    idx:{ Hunters:0, Leaders:0 },        // 각 팀 현재 타순 위치
+    pitcher:{ Hunters:'', Leaders:'' },  // 각 팀의 현재 투수
+    events:[],
+    seq:1,
+  };
+}
+
+/* 공격팀/수비팀 (half에 따라) */
+function offenseTeam(){ return G.half==='초' ? G.awayTeam : G.homeTeam; }
+function defenseTeam(){ return G.half==='초' ? G.homeTeam : G.awayTeam; }
+
+/* ---- 저장/로드 ---- */
+function save(){ if(G) localStorage.setItem(LS_KEY, JSON.stringify(G)); }
+function loadSaved(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'null'); }catch(e){ return null; } }
+
+/* ---- DOM ---- */
+const $ = id => document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1500); }
+
+/* ============================================================
+   경기 시작 / 라인업
+   ============================================================ */
+$('gameDate').value = new Date().toISOString().slice(0,10);
+
+$('startGameBtn').addEventListener('click', ()=>{
+  const date = $('gameDate').value || new Date().toISOString().slice(0,10);
+  const first = $('firstTeamSel').value;
+  G = blankGame(date, first);
+  // 기본 투수 = 명단 첫 선수 (변경 가능)
+  G.pitcher.Hunters = ROSTER.Hunters[0];
+  G.pitcher.Leaders = ROSTER.Leaders[0];
+  save();
+  buildLineupEditor();
+  $('setupPanel').classList.add('hidden');
+  $('lineupPanel').classList.remove('hidden');
+});
+
+function buildLineupEditor(){
+  const grid = $('lineupGrid');
+  grid.innerHTML = ['Hunters','Leaders'].map(team=>{
+    const slots = Array.from({length:9}, (_,i)=>{
+      const cur = G.lineup[team][i] || '';
+      const opts = `<option value="">—</option>` + ROSTER[team].map(n=>`<option value="${n}" ${n===cur?'selected':''}>${n}</option>`).join('');
+      return `<div class="lineup-slot"><span class="ord">${i+1}</span><select data-team="${team}" data-ord="${i}">${opts}</select></div>`;
+    }).join('');
+    return `<div class="lineup-col">
+      <h3 class="${teamClass(team)}">${TEAM_KO[team]}</h3>${slots}</div>`;
+  }).join('');
+  grid.querySelectorAll('select').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      const t=e.target.dataset.team, o=+e.target.dataset.ord;
+      G.lineup[t][o] = e.target.value;
+      save();
+    });
+  });
+}
+
+$('autoFillBtn').addEventListener('click', ()=>{
+  ['Hunters','Leaders'].forEach(team=>{
+    G.lineup[team] = ROSTER[team].slice(0,9);
+  });
+  save(); buildLineupEditor();
+  toast('명단 순서로 채웠어요');
+});
+
+$('lineupDoneBtn').addEventListener('click', ()=>{
+  // 빈 타순이면 명단 순서로 자동 보정
+  ['Hunters','Leaders'].forEach(team=>{
+    G.lineup[team] = (G.lineup[team]||[]).filter(Boolean);
+    if(G.lineup[team].length===0) G.lineup[team] = ROSTER[team].slice(0,9);
+  });
+  save();
+  $('lineupPanel').classList.add('hidden');
+  $('recordPanel').classList.remove('hidden');
+  buildResultGrid();
+  renderAll();
+});
+
+/* ============================================================
+   결과 버튼 그리드
+   ============================================================ */
+function buildResultGrid(){
+  $('resultGrid').innerHTML = RESULTS.map(r=>
+    `<button class="rbtn ${r.cls}" data-key="${r.key}">${r.key}<span class="sub">${r.sub}</span></button>`
+  ).join('');
+  $('resultGrid').querySelectorAll('.rbtn').forEach(b=>{
+    b.addEventListener('click', ()=>onResult(b.dataset.key));
+  });
+}
+
+/* ============================================================
+   현재 타자 / 미니 스코어보드 렌더
+   ============================================================ */
+function curLineup(){ return G.lineup[offenseTeam()]; }
+function curIdx(){ return G.idx[offenseTeam()] % curLineup().length; }
+function curBatterName(){ return curLineup()[curIdx()]; }
+
+function calcScore(){
+  const s={Hunters:0,Leaders:0};
+  G.events.forEach(e=> s[e.offenseTeam]+=(e.runScoredDelta||0));
+  return s;
+}
+function renderMiniboard(){
+  const s=calcScore(); const a=G.awayTeam,h=G.homeTeam;
+  $('miniboard').innerHTML = `
+    <div class="mb-team"><div class="tn ${teamClass(a)}">${TEAM_KO[a]}</div><div class="rn">${s[a]}</div></div>
+    <div class="mb-mid"><div class="inn">${G.inning}회</div><div>${G.half}</div></div>
+    <div class="mb-team"><div class="tn ${teamClass(h)}">${TEAM_KO[h]}</div><div class="rn">${s[h]}</div></div>`;
+}
+function renderBatter(){
+  const name = curBatterName();
+  $('curBatter').innerHTML = `<span class="ord">${curIdx()+1}번</span>${name||'—'}`;
+  $('curBatterMeta').textContent = `${TEAM_KO[offenseTeam()]} 공격 · ${G.inning}회 ${G.half}`;
+  $('curPitcher').textContent = `상대 투수: ${G.pitcher[defenseTeam()]||'-'}`;
+}
+function renderLog(){
+  const list=$('logList');
+  if(G.events.length===0){ list.innerHTML='<div class="empty">아직 기록이 없습니다.</div>'; $('logCount').textContent=''; return; }
+  $('logCount').textContent = `(${G.events.length})`;
+  list.innerHTML = G.events.slice().reverse().map(e=>{
+    const cls = resCls(e.hitterEvent);
+    const extra = [(e.rbiDelta>0?`+${e.rbiDelta}타점`:''),(e.runScoredDelta>0?`⚑${e.runScoredDelta}득점`:'')].filter(Boolean).join(' ');
+    return `<div class="log-item">
+      <span class="li-inn">${e.inning}회${e.half}</span>
+      <span class="li-htr">${e.hitterName}</span>
+      <span class="li-res res-${cls}">${e.hitterEvent}</span>
+      <span class="li-extra">${extra}</span>
+      <button class="li-del" data-id="${e.id}">✕</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.li-del').forEach(b=>b.addEventListener('click',()=>delEvent(b.dataset.id)));
+}
+function resCls(ev){
+  if(ev==='홈런')return'hr';
+  if(['1루타','2루타','3루타'].includes(ev))return'hit';
+  if(ev==='볼넷'||ev==='사구')return'walk';
+  if(ev==='수비 실책')return'err';
+  return'out';
+}
+function renderAll(){ renderMiniboard(); renderBatter(); renderLog(); save(); }
+
+/* ============================================================
+   타자 네비게이션 (자동/수동)
+   ============================================================ */
+$('nextBatterBtn').addEventListener('click', ()=>{ G.idx[offenseTeam()]=(curIdx()+1)%curLineup().length; renderAll(); });
+$('prevBatterBtn').addEventListener('click', ()=>{ const L=curLineup().length; G.idx[offenseTeam()]=(curIdx()-1+L)%L; renderAll(); });
+$('pickBatterBtn').addEventListener('click', ()=>{
+  const L=curLineup();
+  const pick = prompt(`타자 선택 (1~${L.length}):\n`+L.map((n,i)=>`${i+1}. ${n}`).join('\n'));
+  const n=parseInt(pick,10);
+  if(n>=1 && n<=L.length){ G.idx[offenseTeam()]=n-1; renderAll(); }
+});
+$('switchHalfBtn').addEventListener('click', ()=>{
+  if(G.half==='초'){ G.half='말'; } else { G.half='초'; G.inning++; }
+  renderAll(); toast(`${G.inning}회 ${G.half}`);
+});
+$('changePitcherBtn').addEventListener('click', ()=>{
+  const team=defenseTeam();
+  const pick=prompt(`${TEAM_KO[team]} 투수 선택:\n`+ROSTER[team].map((n,i)=>`${i+1}. ${n}`).join('\n'));
+  const n=parseInt(pick,10);
+  if(n>=1&&n<=ROSTER[team].length){ G.pitcher[team]=ROSTER[team][n-1]; renderAll(); toast('투수 변경'); }
+});
+
+/* ============================================================
+   결과 입력 → 타점/득점 추가 → 저장
+   ============================================================ */
+let pending = null;  // {result, rbi, run, er}
+function onResult(key){
+  const def = RESULTS.find(r=>r.key===key);
+  pending = { def, rbi:0, run:0, er:0 };
+  // 자책점 입력은 안타/볼넷류일 때만 의미있게 보이되 항상 허용
+  $('rbiVal').textContent='0'; $('runVal').textContent='0'; $('erVal').textContent='0';
+  $('extrasBox').classList.add('show');
+  $('extrasBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+document.querySelectorAll('#extrasBox .stepper button').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    if(!pending) return;
+    const f=b.dataset.er, d=+b.dataset.d;
+    pending[f]=Math.max(0, pending[f]+d);
+    $(f+'Val').textContent=pending[f];
+  });
+});
+$('extrasCancelBtn').addEventListener('click', ()=>{ pending=null; $('extrasBox').classList.remove('show'); });
+$('extrasSaveBtn').addEventListener('click', ()=>{
+  if(!pending) return;
+  commitAtBat(curBatterName(), pending.def.key, pending.rbi, pending.run, pending.er);
+  pending=null; $('extrasBox').classList.remove('show');
+  // 자동으로 다음 타자
+  G.idx[offenseTeam()]=(curIdx()+1)%curLineup().length;
+  renderAll();
+  toast('기록 저장 ✓');
+});
+
+/* 실제 이벤트 생성 (기존 gamerecord 형식과 동일) */
+function commitAtBat(hitter, resultKey, rbi=0, run=0, er=0){
+  const def = RESULTS.find(r=>r.key===resultKey) || {};
+  const isHit = !!def.isHit;
+  const ev = {
+    id: 'evt_'+String(G.seq++).padStart(4,'0'),
+    gameId: G.gameId,
+    ts: Date.now(),
+    inning: G.inning,
+    half: G.half,
+    offenseTeam: offenseTeam(),
+    defenseTeam: defenseTeam(),
+    pitcherName: G.pitcher[defenseTeam()]||'',
+    hitterName: hitter||'',
+    pitchCountDelta: 0,
+    inningsDelta: 0,
+    earnedRunsDelta: er||0,
+    pitcherEvent: def.pitcher||'',
+    pitcherDecision: null,
+    hitterEvent: resultKey,
+    rbiDelta: rbi||0,
+    runScoredDelta: run||0,
+  };
+  G.events.push(ev);
+  save();
+}
+
+function delEvent(id){
+  G.events = G.events.filter(e=>e.id!==id);
+  renderAll();
+}
+$('undoBtn').addEventListener('click', ()=>{
+  if(G.events.length===0) return;
+  G.events.pop(); renderAll(); toast('마지막 기록 취소');
+});
+
+/* ============================================================
+   모드 전환 (버튼 / AI)
+   ============================================================ */
+$('modeSeg').addEventListener('click', e=>{
+  if(e.target.tagName!=='BUTTON') return;
+  const mode=e.target.dataset.mode;
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('active',b===e.target));
+  $('buttonMode').classList.toggle('hidden', mode!=='button');
+  $('aiMode').classList.toggle('hidden', mode!=='ai');
+});
+
+/* ============================================================
+   AI 자연어 입력 (인터넷 필요, 확인 후 저장)
+   ============================================================ */
+let aiParsed = [];   // 변환된 이벤트 미리보기 배열
+
+$('aiParseBtn').addEventListener('click', async ()=>{
+  const text = $('aiInput').value.trim();
+  if(!text){ setAiStatus('상황을 입력해주세요.','err'); return; }
+  setAiStatus('AI가 변환 중…','busy');
+  $('aiParseBtn').disabled=true;
+  try{
+    aiParsed = await parseWithAI(text);
+    if(!aiParsed.length){ setAiStatus('변환된 타석이 없어요. 표현을 바꿔보세요.','err'); $('aiParseBtn').disabled=false; return; }
+    renderPreview();
+    setAiStatus(`${aiParsed.length}개 타석 변환 완료 — 확인 후 저장하세요.`,'ok');
+  }catch(err){
+    setAiStatus('AI 변환 실패: 인터넷 연결을 확인하거나 버튼 입력을 사용하세요.','err');
+  }
+  $('aiParseBtn').disabled=false;
+});
+function setAiStatus(msg,cls){ const s=$('aiStatus'); s.textContent=msg; s.className='ai-status '+(cls||''); }
+
+/* AI 호출 — Claude API에게 자연어를 표준 타석 이벤트 배열로 변환시킴 */
+async function parseWithAI(text){
+  const offense = offenseTeam();
+  const roster = ROSTER[offense];
+  const lineup = curLineup();
+  const sys = `당신은 야구 기록원입니다. 사용자가 한국어로 적은 타석 상황을 JSON 배열로 변환하세요.
+현재 ${G.inning}회 ${G.half}, 공격팀은 ${TEAM_KO[offense]}입니다.
+이 팀 타순(1번부터): ${lineup.map((n,i)=>`${i+1}.${n}`).join(', ')}.
+출력은 오직 JSON 배열만. 설명·마크다운 금지. 각 원소는 다음 형식:
+{"hitterName":"선수이름","hitterEvent":"결과","rbiDelta":0,"runScoredDelta":0}
+hitterEvent는 반드시 다음 중 하나: "1루타","2루타","3루타","홈런","볼넷","삼진","내야땅볼","플라이아웃","수비 실책","희생플라이".
+규칙:
+- "안타"=1루타, "2루타/3루타/홈런"은 그대로. "땅볼"=내야땅볼, "플라이/뜬공/뜬볼"=플라이아웃, "삼진/헛스윙"=삼진, "볼넷/사사구/포볼"=볼넷, "에러/실책"=수비 실책.
+- "N번타자"라고 하면 위 타순의 N번 선수 이름을 hitterName에 넣으세요. 이름이 직접 나오면 그 이름을 쓰세요.
+- "X 득점"은 그 타석 결과로 누군가 득점했다는 의미. 타격한 타자 본인이 득점하면 그 타자의 runScoredDelta=1. 주자가 들어오면 타격한 타자의 rbiDelta를 득점 수만큼 올리세요.
+- 모호하면 rbiDelta/runScoredDelta는 0으로 두세요. 확실한 것만 채우세요.`;
+
+  const body = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1000,
+    system: sys,
+    messages: [{ role:"user", content: text }]
+  };
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error("api "+res.status);
+  const data = await res.json();
+  let out = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  out = out.replace(/```json|```/g,'').trim();
+  // 첫 [ ~ 마지막 ] 만 추출
+  const s=out.indexOf('['), e=out.lastIndexOf(']');
+  if(s>=0&&e>=0) out=out.slice(s,e+1);
+  const arr = JSON.parse(out);
+  // 유효성 보정
+  const valid = RESULTS.map(r=>r.key);
+  return arr.filter(x=>x&&x.hitterEvent&&valid.includes(x.hitterEvent))
+            .map(x=>({ hitterName:String(x.hitterName||'').trim(),
+                       hitterEvent:x.hitterEvent,
+                       rbiDelta:+x.rbiDelta||0,
+                       runScoredDelta:+x.runScoredDelta||0 }));
+}
+
+function renderPreview(){
+  $('aiPreview').classList.add('show');
+  $('previewList').innerHTML = aiParsed.map((p,i)=>{
+    const cls=resCls(p.hitterEvent);
+    const extra=[(p.rbiDelta>0?`+${p.rbiDelta}타점`:''),(p.runScoredDelta>0?`⚑${p.runScoredDelta}득점`:'')].filter(Boolean).join(' ');
+    return `<div class="preview-item">
+      <span class="pi-inn">${G.inning}회${G.half}</span>
+      <span class="pi-htr" contenteditable="true" data-i="${i}" data-f="name">${p.hitterName||'?'}</span>
+      <span class="pi-res res-${cls}">${p.hitterEvent}</span>
+      <span class="pi-extra">${extra}</span>
+      <button class="pi-del" data-i="${i}">✕</button>
+    </div>`;
+  }).join('');
+  $('previewList').querySelectorAll('.pi-del').forEach(b=>{
+    b.addEventListener('click',()=>{ aiParsed.splice(+b.dataset.i,1); renderPreview(); });
+  });
+  $('previewList').querySelectorAll('[contenteditable]').forEach(el=>{
+    el.addEventListener('blur',()=>{ aiParsed[+el.dataset.i].hitterName=el.textContent.trim(); });
+  });
+}
+$('previewCancelBtn').addEventListener('click', ()=>{ aiParsed=[]; $('aiPreview').classList.remove('show'); setAiStatus('',''); });
+$('previewSaveBtn').addEventListener('click', ()=>{
+  if(aiParsed.length===0) return;
+  aiParsed.forEach(p=> commitAtBat(p.hitterName, p.hitterEvent, p.rbiDelta, p.runScoredDelta, 0));
+  const n=aiParsed.length;
+  aiParsed=[]; $('aiPreview').classList.remove('show'); $('aiInput').value=''; setAiStatus('',''); 
+  renderAll();
+  toast(`${n}개 타석 저장 ✓`);
+});
+
+/* ============================================================
+   파일 내보내기 / 경기 종료 / 이어하기
+   ============================================================ */
+$('exportBtn').addEventListener('click', ()=>{
+  const out = {
+    version:'3',
+    games:[{ gameId:G.gameId, date:G.date, homeTeam:G.homeTeam, awayTeam:G.awayTeam, firstTeam:G.firstTeam, notes:G.notes||'' }],
+    events: G.events.map(({...e})=>e),
+  };
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`gamerecord_${G.date}_${G.awayTeam}@${G.homeTeam}.json`; a.click();
+  URL.revokeObjectURL(url);
+  toast('파일 내보냄 ⬇');
+});
+
+$('endGameBtn').addEventListener('click', ()=>{
+  if(!confirm('경기를 종료할까요? (브라우저 저장은 유지됩니다)')) return;
+  $('recordPanel').classList.add('hidden');
+  $('setupPanel').classList.remove('hidden');
+  refreshLoadList();
+});
+
+function refreshLoadList(){
+  const saved = loadSaved();
+  const sel=$('loadGameSel');
+  sel.innerHTML='<option value="">저장된 경기…</option>';
+  if(saved){ sel.innerHTML+=`<option value="cur">${saved.date} · ${TEAM_KO[saved.awayTeam]}@${TEAM_KO[saved.homeTeam]} (이어하기)</option>`; }
+}
+$('loadGameSel').addEventListener('change', e=>{
+  if(e.target.value!=='cur') return;
+  G = loadSaved();
+  if(!G) return;
+  $('setupPanel').classList.add('hidden');
+  $('recordPanel').classList.remove('hidden');
+  buildResultGrid(); renderAll();
+});
+
+/* ============================================================
+   부트스트랩 — 저장된 경기 있으면 자동 복구 안내
+   ============================================================ */
+(function init(){
+  const saved = loadSaved();
+  if(saved && saved.events){
+    refreshLoadList();
+    // 진행 중 경기가 있으면 바로 복구
+    G = saved;
+    $('setupPanel').classList.add('hidden');
+    $('recordPanel').classList.remove('hidden');
+    buildResultGrid(); renderAll();
+  }
+})();
+
+</script>
+</body>
+</html>
